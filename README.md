@@ -16,8 +16,8 @@ clone the gh repo for txt ai
 install ollama
 
 in the root folder of the txtai repo run
-'''pip install .'''
-this will install the repo from your local machine.  Now when you make changes to the files then it will take those and use them rather than a PyPi version.
+'''pip install -e .'''
+this will install the repo from your local machine, the '-e' allows the files to be editable rather than static taken at the point of the build/install.  Now when you make changes to the files then it will take those and use them rather than a PyPi version.
 
 
 Inside the repo you'll find a folder called src/piplines/llm or similar.
