@@ -43,17 +43,21 @@ class Ollama(Generation):
         return False
 
     def __init__(self, path, template=None, **kwargs):
-        #print(f"Values at class init: path = {path}, template = {template}, kwargs = {kwargs}")
+        logging.debug(f"Values at class init: path = {path}, template = {template}, kwargs = {kwargs}")
         super().__init__(path, template, **kwargs)
         
-        # Dynamically set attributes with a prefix based on kwargs
-        #for key, value in kwargs.items():   #If there's a clash or overwriting values then will need to set this, as it adds 'init_' to the prefix.  I'm taking it out initially so that I can put all the self. values into kwargs with the same name.
 
-        #print("kwargs from Ollama.py - __init__")
-        #for key, value in kwargs.items():
-         #   print(key, value)
-          #  setattr(self, f"{key}", value)
-        #print("self.stream value: ", self.stream, "\n")
+        #set a load of kwargs to whatever is being passed in, but if not then fall back to x value.  These are all values that the later scripts need.  The only one that isn't here is 'model' because there's no default that could be selected.
+        self.chat = kwargs.get('chat', False)
+        self.metadata = kwargs.get('metadata', False)
+        self.memory = kwargs.get('memory', False)
+        self.stream = kwargs.get('stream', False)
+        self.maxlength = kwargs.get('maxlength', 4000)
+        self.method = kwargs.get('method', 'ollama')
+
+        #then, if there's a value that's being passed in from the kwargs, set it to that.
+        for key, value in kwargs.items():
+            setattr(self, f"{key}", value)
 
         # Register prompt template
         self.register(path)
@@ -95,10 +99,10 @@ class Ollama(Generation):
         """
         
 
-        #print(f"Inputs to the execute function: texts = {texts}, maxlength = {maxlength}, kwargs = {kwargs}")
-        #print("self.kwargs from Ollama.py - execute")
-        #for key, value in self.kwargs.items():
-         #   print(key, value)
+        logging.debug(f"Inputs to the execute function: texts = {texts}, maxlength = {maxlength}, kwargs = {kwargs}")
+        logging.debug("self.kwargs from Ollama.py - execute")
+        for key, value in self.kwargs.items():
+            print(key, value)
         
         # Define a function to handle API calls safely - not having lots of open sessions!yyyy
         def safe_api_call(api_url, payload):
@@ -129,26 +133,22 @@ class Ollama(Generation):
             gen_type = 'chat'
         else:
             gen_type = 'generate'
+        logging.debug("gen_type = ", gen_type)
 
-       # gen_type = self.gen_type if hasattr(self, 'gen_type') else "generate"
-        #if gen_type not in ["chat", "generate"]:
-            print(f"current gen_type =  {gen_type}" )
-            raise ValueError("Invalid generation type specified. Use 'generate' or 'chat'.")
         #else:
         api_url = base_api_url + gen_type 
         print(api_url)
 
-        # makes a variable value out of any self.keys so that any kwarg passed into the LLM creation is passed into the LLM at time of calling it & construct the payload using the variables created from self.keywords
         if not hasattr(self, 'model') or not self.model:
             raise ValueError("model_name must be provided")
-        #for debug
-        #print(f"\nOllama.py\nModel: {self.model}")
+        
+        logging.debug(f"\nOllama.py\nModel: {self.model}")
         
         # Initialize payload with kwargs, excluding 'method' and 'gen_type'
         payload = {key: value for key, value in self.kwargs.items() if key not in ['method', 'gen_type']}
         
+                
         if gen_type == "generate":
-            # Initialize prompt as None
             prompt = None
             
             # Check if 'prompt' is directly provided in the texts
@@ -162,14 +162,13 @@ class Ollama(Generation):
                 prompt = texts[0]['prompt']
             else:
                 raise ValueError("Invalid format for 'texts'. Must be a string, a dictionary with a 'prompt' key, or a single-item list containing a string.")
-            
             # Update the payload with the prompt
             payload["prompt"] = prompt
+            
             
         elif gen_type == "chat":
             # Initialize messages as None
             messages = None
-            
             # Check if 'texts' is a list containing a single dictionary with a 'messages' key
             if isinstance(texts, list) and len(texts) == 1 and isinstance(texts[0], dict) and 'messages' in texts[0]:
                 messages = texts[0]['messages']
@@ -188,7 +187,7 @@ class Ollama(Generation):
         # Update the payload with any additional kwargs
         payload.update(kwargs)
         
-        #print(f"JL - Complete API call: {api_url}, Payload: {payload}")
+        logging.debug(f"JL - Complete API call: {api_url}, Payload: {payload}")
         
         
         
@@ -208,7 +207,7 @@ class Ollama(Generation):
                     logging.error("The key 'response' was not found in the API response.")
                     return [], {}
             elif gen_type == "chat":
-                #print(response_data)
+                logging.debug("Response Data from Ollama.Execute= " , response_data)
                 if 'messages' in response_data:
                     generated_texts = [message['content'] for message in response_data['messages'] if message['role'] == 'assistant']
                 elif 'message' in response_data and response_data['message']['role'] == 'assistant':

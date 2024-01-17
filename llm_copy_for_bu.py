@@ -5,7 +5,6 @@ LLM module
 from .factory import GenerationFactory
 
 from ..base import Pipeline
-from spinner import spin, unspin
 
 
 class LLM(Pipeline):
@@ -30,19 +29,15 @@ class LLM(Pipeline):
             kwargs: model keyword arguments
             
         """
-        # Set 'stream' variable as False, maxlength as 512, but both will be overwritten by the user instructions
-        #stream = False
-       # maxlength = int(4000)
-        # Include 'stream' in kwargs
-        #kwargs['stream'] = stream
-        #kwargs['maxlength'] = maxlength
+
         self.stream = False
         self.maxlength = int(4000)
+        
         # Include 'stream' and 'maxlength' in kwargs if not already provided by the user
         kwargs.setdefault('stream', self.stream)
         kwargs.setdefault('maxlength', self.maxlength)
 
-
+        
         # Generation instance
         def print_initialization_parameters(path, method, kwargs):
             print("Initializing LLM with the following parameters (from llm.py, __init__):")

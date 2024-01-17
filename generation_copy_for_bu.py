@@ -25,6 +25,7 @@ class Generation:
         self.template = template
         self.kwargs = kwargs
 
+        
     def __call__(self, text, maxlength, **kwargs):
         """
         Generates text using input text
